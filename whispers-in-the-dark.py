@@ -217,10 +217,29 @@ class Player(Entity):
         if kp(pygame.K_d) or kp(pygame.K_RIGHT):
             self.vx = effective_speed
             self.facing = 1
+        # full air control: can change direction mid-jump (no penalty)
+        # jump (normal)
         if (kp(pygame.K_SPACE) or kp(pygame.K_w) or
                 kp(pygame.K_UP)) and self.on_ground and not self.crouching:
             self.vy = -PLAYER_JUMP
             self.on_ground = False
+        # wall jump: if touching a wall mid-air, jump off it
+        if (kp(pygame.K_SPACE) or kp(pygame.K_w) or
+                kp(pygame.K_UP)) and not self.on_ground and not self.crouching:
+            # check if touching a wall on the side we're moving toward
+            for wall in tilemap.walls:
+                if self.vx > 0 and abs(self.x + self.w - wall.left) < 6:
+                    # wall on the right — jump away left
+                    self.vy = -PLAYER_JUMP * 0.85
+                    self.vx = -PLAYER_JUMP * 0.6
+                    self.facing = -1
+                    break
+                elif self.vx < 0 and abs(wall.right - self.x) < 6:
+                    # wall on the left — jump away right
+                    self.vy = -PLAYER_JUMP * 0.85
+                    self.vx = PLAYER_JUMP * 0.6
+                    self.facing = 1
+                    break
         # adjust the player rect height for collision when crouching
         original_h = self.h
         self.h = effective_h
